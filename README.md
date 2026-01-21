@@ -218,7 +218,7 @@ SELECT * FROM companies LIMIT 10;
 - ✅ **Phase 2**: Company Settings (Rates, Equipment, Overhead, Margins)
 - ✅ **Phase 3**: Project Management (Full CRUD, filtering, bid items)
 - ✅ **Phase 4**: File Upload (Plans/specs with local storage)
-- ⏳ **Phase 5**: AI Integration (Claude/GPT plan parsing)
+- ✅ **Phase 5**: AI Integration (Claude 3.5 Sonnet vision plan parsing)
 - ⏳ **Phase 6**: Estimation Engine
 
 **See QUICKSTART.md for step-by-step instructions to run the app!**
@@ -333,6 +333,47 @@ Document management for construction plans and specifications:
 ```bash
 cd backend
 python test_documents.py
+```
+
+## 🤖 Phase 5: AI Integration Features
+
+AI-powered plan parsing using Claude 3.5 Sonnet vision:
+
+- Parse construction plans using AI vision models
+- Extract bid items with quantities and units
+- Extract specifications and material requirements
+- Extract project information (name, location, bid date)
+- Save parsed data to database automatically
+- Fallback to OCR when AI APIs unavailable
+
+**AI Models:**
+- **Primary**: Claude 3.5 Sonnet vision (claude-3-5-sonnet-20241022)
+- **Fallback**: Tesseract OCR for text extraction
+
+**API Endpoints:**
+- `GET /api/v1/ai/status` - Check AI service status
+- `POST /api/v1/ai/projects/{id}/documents/{doc_id}/parse` - Parse plan document
+- `POST /api/v1/ai/projects/{id}/documents/{doc_id}/parse-and-save` - Parse and save to DB
+
+**Features:**
+- Vision-based PDF analysis (up to 10 pages)
+- Extracts: bid items, quantities, units, specifications
+- Structured JSON output
+- Automatic database storage of parsed items
+- Company-scoped access
+- OCR fallback for reliability
+
+**Setup (Optional):**
+Add to your `.env` file:
+```bash
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...  # Optional
+```
+
+**Test it:**
+```bash
+cd backend
+python test_ai_parsing.py
 ```
 
 ## 🐛 Troubleshooting

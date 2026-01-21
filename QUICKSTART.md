@@ -215,6 +215,31 @@ DELETE http://localhost:8000/api/v1/projects/{project_id}/documents/{document_id
 Authorization: Bearer <your_token>
 ```
 
+### AI Plan Parsing
+
+**Check AI Service Status:**
+```bash
+GET http://localhost:8000/api/v1/ai/status
+Authorization: Bearer <your_token>
+```
+
+**Parse Plan Document:**
+```bash
+POST http://localhost:8000/api/v1/ai/projects/{project_id}/documents/{document_id}/parse?max_pages=5
+Authorization: Bearer <your_token>
+```
+
+**Parse and Save to Database:**
+```bash
+POST http://localhost:8000/api/v1/ai/projects/{project_id}/documents/{document_id}/parse-and-save?max_pages=5
+Authorization: Bearer <your_token>
+```
+
+**Setup (Add to `.env` file):**
+```bash
+ANTHROPIC_API_KEY=sk-ant-your-key-here
+```
+
 ## 🧪 Testing with cURL
 
 **Register:**
