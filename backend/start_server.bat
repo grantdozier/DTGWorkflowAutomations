@@ -9,7 +9,7 @@ cd /d "%~dp0"
 REM Check if virtual environment exists
 if not exist "venv" (
     echo Virtual environment not found. Creating...
-    python -m venv venv
+    py -m venv venv
 )
 
 REM Activate virtual environment

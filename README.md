@@ -223,6 +223,56 @@ SELECT * FROM companies LIMIT 10;
 
 ## 🎉 System Complete!
 
+All phases are now implemented! The system is fully functional end-to-end with a web UI.
+
+## 🖥️ Using the Web Application
+
+### Quick Start:
+
+**1. Start Backend:**
+```bash
+cd backend
+start_server.bat  # Windows
+# Or: uvicorn app.main:app --reload
+```
+
+**2. Start Frontend:**
+```bash
+cd frontend
+start_frontend.bat  # Windows
+# Or: npm run dev
+```
+
+**3. Open Browser:**
+- Navigate to http://localhost:5173
+- Register a new account (creates your company automatically)
+- Login with your credentials
+
+### Web UI Features:
+
+**Dashboard:**
+- View all your projects
+- Create new projects
+- Quick access to project details
+
+**Project Page:**
+- Upload PDF construction plans
+- Parse documents with AI (click "Parse with AI")
+- Generate cost estimates automatically
+- View detailed cost breakdowns
+- See all project estimates
+
+### Workflow in the Web UI:
+
+1. **Register** → Create your account and company
+2. **Login** → Access your dashboard
+3. **Create Project** → Click "New Project" button
+4. **Open Project** → Click "Open" on any project card
+5. **Upload Plan** → Click "Upload PDF Plan" and select file
+6. **Parse Plan** → Click "Parse with AI" button (requires API key)
+7. **Generate Estimate** → Click "Generate Estimate" button
+8. **View Results** → See complete cost breakdown with materials, labor, equipment, overhead, and profit
+
 All phases are now implemented! The system is fully functional end-to-end.
 
 **See QUICKSTART.md for step-by-step instructions to run the app!**

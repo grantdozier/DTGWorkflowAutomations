@@ -1,9 +1,10 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
-import Box from '@mui/material/Box'
-import Container from '@mui/material/Container'
-import Typography from '@mui/material/Typography'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Dashboard from './pages/Dashboard'
+import ProjectDetail from './pages/ProjectDetail'
 
 const theme = createTheme({
   palette: {
@@ -17,23 +18,10 @@ const theme = createTheme({
   },
 })
 
-function HomePage() {
-  return (
-    <Container maxWidth="lg">
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          DTG Workflow Automations
-        </Typography>
-        <Typography variant="h5" component="h2" gutterBottom>
-          Construction Estimation & Project Management
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Welcome to the DTG Workflow Automations platform. This system helps you manage
-          construction projects, estimates, and workflows efficiently.
-        </Typography>
-      </Box>
-    </Container>
-  )
+// Protected Route Component
+function ProtectedRoute({ children }: { children: JSX.Element }) {
+  const token = localStorage.getItem('token')
+  return token ? children : <Navigate to="/login" />
 }
 
 function App() {
@@ -42,7 +30,25 @@ function App() {
       <CssBaseline />
       <Router>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/project/:projectId"
+            element={
+              <ProtectedRoute>
+                <ProjectDetail />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Router>
     </ThemeProvider>
