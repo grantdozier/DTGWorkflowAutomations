@@ -53,8 +53,7 @@ async def health_check():
     return {"status": "healthy"}
 
 
-# Import and include routers (will add after creating models and endpoints)
-# from app.api.v1 import auth, projects, companies
-# app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
-# app.include_router(projects.router, prefix="/api/v1/projects", tags=["projects"])
-# app.include_router(companies.router, prefix="/api/v1/companies", tags=["companies"])
+# Import and include routers
+from app.api.v1.endpoints import auth
+
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
