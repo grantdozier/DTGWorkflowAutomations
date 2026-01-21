@@ -217,7 +217,7 @@ SELECT * FROM companies LIMIT 10;
 - ✅ **Phase 1**: Authentication (Registration, Login, JWT tokens)
 - ✅ **Phase 2**: Company Settings (Rates, Equipment, Overhead, Margins)
 - ✅ **Phase 3**: Project Management (Full CRUD, filtering, bid items)
-- ⏳ **Phase 4**: File Upload for plans/specs
+- ✅ **Phase 4**: File Upload (Plans/specs with local storage)
 - ⏳ **Phase 5**: AI Integration (Claude/GPT plan parsing)
 - ⏳ **Phase 6**: Estimation Engine
 
@@ -302,6 +302,37 @@ Full CRUD operations for construction projects:
 ```bash
 cd backend
 python test_projects.py
+```
+
+## 📁 Phase 4: File Upload Features
+
+Document management for construction plans and specifications:
+
+- Upload PDF plans and specifications to projects
+- Local file storage with organized directory structure
+- File validation (PDF only, 50MB max)
+- Download/view uploaded documents
+- List documents with filtering by type
+- Delete documents (removes file and database record)
+- Automatic file organization by project
+
+**API Endpoints:**
+- `POST /api/v1/projects/{id}/documents` - Upload document
+- `GET /api/v1/projects/{id}/documents` - List documents (filter by type)
+- `GET /api/v1/projects/{id}/documents/{doc_id}` - Download document
+- `DELETE /api/v1/projects/{id}/documents/{doc_id}` - Delete document
+
+**Features:**
+- PDF file validation
+- File size limits (50MB)
+- Organized storage: `uploads/plans/{project_id}/` and `uploads/specs/{project_id}/`
+- Secure file access (company-scoped)
+- Document type filtering (plan, spec)
+
+**Test it:**
+```bash
+cd backend
+python test_documents.py
 ```
 
 ## 🐛 Troubleshooting

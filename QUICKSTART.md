@@ -169,6 +169,52 @@ GET http://localhost:8000/api/v1/company/rates/examples
 Authorization: Bearer <your_token>
 ```
 
+### Document Upload
+
+**Upload Plan to Project:**
+```bash
+POST http://localhost:8000/api/v1/projects/{project_id}/documents
+Authorization: Bearer <your_token>
+Content-Type: multipart/form-data
+
+file: (select PDF file)
+doc_type: plan
+```
+
+**Upload Specification:**
+```bash
+POST http://localhost:8000/api/v1/projects/{project_id}/documents
+Authorization: Bearer <your_token>
+Content-Type: multipart/form-data
+
+file: (select PDF file)
+doc_type: spec
+```
+
+**List All Documents:**
+```bash
+GET http://localhost:8000/api/v1/projects/{project_id}/documents
+Authorization: Bearer <your_token>
+```
+
+**List Only Plans:**
+```bash
+GET http://localhost:8000/api/v1/projects/{project_id}/documents?doc_type=plan
+Authorization: Bearer <your_token>
+```
+
+**Download Document:**
+```bash
+GET http://localhost:8000/api/v1/projects/{project_id}/documents/{document_id}
+Authorization: Bearer <your_token>
+```
+
+**Delete Document:**
+```bash
+DELETE http://localhost:8000/api/v1/projects/{project_id}/documents/{document_id}
+Authorization: Bearer <your_token>
+```
+
 ## 🧪 Testing with cURL
 
 **Register:**
@@ -194,6 +240,14 @@ curl -X POST http://localhost:8000/api/v1/auth/login \
 ```bash
 curl -X GET http://localhost:8000/api/v1/auth/me \
   -H "Authorization: Bearer TOKEN"
+```
+
+**Upload Document (replace TOKEN and PROJECT_ID):**
+```bash
+curl -X POST http://localhost:8000/api/v1/projects/PROJECT_ID/documents \
+  -H "Authorization: Bearer TOKEN" \
+  -F "file=@/path/to/plan.pdf" \
+  -F "doc_type=plan"
 ```
 
 ## 📊 Database Access
