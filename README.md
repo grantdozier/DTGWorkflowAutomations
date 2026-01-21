@@ -215,10 +215,11 @@ SELECT * FROM companies LIMIT 10;
 
 - ✅ **Phase 0**: Project initialization (FastAPI, React, PostgreSQL)
 - ✅ **Phase 1**: Authentication (Registration, Login, JWT tokens)
-- ⏳ **Phase 2**: Project Management CRUD
-- ⏳ **Phase 3**: File Upload for plans/specs
-- ⏳ **Phase 4**: AI Integration (Claude/GPT plan parsing)
-- ⏳ **Phase 5**: Estimation Engine
+- ✅ **Phase 2**: Company Settings (Rates, Equipment, Overhead, Margins)
+- ⏳ **Phase 3**: Project Management CRUD
+- ⏳ **Phase 4**: File Upload for plans/specs
+- ⏳ **Phase 5**: AI Integration (Claude/GPT plan parsing)
+- ⏳ **Phase 6**: Estimation Engine
 
 **See QUICKSTART.md for step-by-step instructions to run the app!**
 
@@ -241,6 +242,31 @@ The authentication system is complete with:
 ```bash
 cd backend
 python test_auth.py
+```
+
+## 🏢 Phase 2: Company Settings Features
+
+Company settings allow users to configure their business parameters:
+
+- View and update company information
+- Configure labor rates (foreman, operator, laborer, etc.)
+- Set equipment rates (excavator, bulldozer, crane, etc.)
+- Define overhead costs (percentage, fixed costs, insurance)
+- Set profit margins (default, minimum, target)
+- Flexible JSON storage for easy customization
+
+**API Endpoints:**
+- `GET /api/v1/company/me` - Get company info
+- `PUT /api/v1/company/me` - Update company info
+- `GET /api/v1/company/rates` - Get company rates
+- `POST /api/v1/company/rates` - Create company rates
+- `PUT /api/v1/company/rates` - Update company rates
+- `GET /api/v1/company/rates/examples` - Get example rate structures
+
+**Test it:**
+```bash
+cd backend
+python test_company.py
 ```
 
 ## 🐛 Troubleshooting

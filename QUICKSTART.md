@@ -97,6 +97,78 @@ GET http://localhost:8000/api/v1/auth/me
 Authorization: Bearer <your_token>
 ```
 
+### Company Settings
+
+**Get Company Info:**
+```bash
+GET http://localhost:8000/api/v1/company/me
+Authorization: Bearer <your_token>
+```
+
+**Update Company Name:**
+```bash
+PUT http://localhost:8000/api/v1/company/me
+Authorization: Bearer <your_token>
+Content-Type: application/json
+
+{
+  "name": "Updated Company Name"
+}
+```
+
+**Create Company Rates:**
+```bash
+POST http://localhost:8000/api/v1/company/rates
+Authorization: Bearer <your_token>
+Content-Type: application/json
+
+{
+  "labor_rate_json": {
+    "foreman": 45.00,
+    "operator": 35.00,
+    "laborer": 25.00
+  },
+  "equipment_rate_json": {
+    "excavator": 125.00,
+    "bulldozer": 150.00
+  },
+  "overhead_json": {
+    "percentage": 15.0,
+    "fixed_costs": 10000.00
+  },
+  "margin_json": {
+    "default_percentage": 10.0,
+    "minimum_percentage": 5.0
+  }
+}
+```
+
+**Get Company Rates:**
+```bash
+GET http://localhost:8000/api/v1/company/rates
+Authorization: Bearer <your_token>
+```
+
+**Update Company Rates:**
+```bash
+PUT http://localhost:8000/api/v1/company/rates
+Authorization: Bearer <your_token>
+Content-Type: application/json
+
+{
+  "labor_rate_json": {
+    "foreman": 50.00,
+    "operator": 40.00
+  }
+}
+```
+
+**Get Rate Examples:**
+```bash
+GET http://localhost:8000/api/v1/company/rates/examples
+Authorization: Bearer <your_token>
+```
+
 ## 🧪 Testing with cURL
 
 **Register:**
