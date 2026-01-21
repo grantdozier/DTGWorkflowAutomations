@@ -216,7 +216,7 @@ SELECT * FROM companies LIMIT 10;
 - ✅ **Phase 0**: Project initialization (FastAPI, React, PostgreSQL)
 - ✅ **Phase 1**: Authentication (Registration, Login, JWT tokens)
 - ✅ **Phase 2**: Company Settings (Rates, Equipment, Overhead, Margins)
-- ⏳ **Phase 3**: Project Management CRUD
+- ✅ **Phase 3**: Project Management (Full CRUD, filtering, bid items)
 - ⏳ **Phase 4**: File Upload for plans/specs
 - ⏳ **Phase 5**: AI Integration (Claude/GPT plan parsing)
 - ⏳ **Phase 6**: Estimation Engine
@@ -267,6 +267,41 @@ Company settings allow users to configure their business parameters:
 ```bash
 cd backend
 python test_company.py
+```
+
+## 📋 Phase 3: Project Management Features
+
+Full CRUD operations for construction projects:
+
+- Create new projects with job numbers
+- List all projects with pagination
+- Filter projects by type (state, private, federal)
+- Get individual project details
+- Update project information
+- Delete projects
+- View project documents
+- Manage project bid items
+
+**API Endpoints:**
+- `POST /api/v1/projects` - Create new project
+- `GET /api/v1/projects` - List projects (with pagination & filters)
+- `GET /api/v1/projects/{id}` - Get project details
+- `PUT /api/v1/projects/{id}` - Update project
+- `DELETE /api/v1/projects/{id}` - Delete project
+- `GET /api/v1/projects/{id}/documents` - List project documents
+- `GET /api/v1/projects/{id}/bid-items` - List project bid items
+- `POST /api/v1/projects/{id}/bid-items` - Add bid item to project
+
+**Features:**
+- Company-scoped data (users only see their own projects)
+- Unique job number validation
+- Type filtering (state, private, federal, etc.)
+- Pagination support
+
+**Test it:**
+```bash
+cd backend
+python test_projects.py
 ```
 
 ## 🐛 Troubleshooting
