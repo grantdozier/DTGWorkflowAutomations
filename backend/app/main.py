@@ -54,10 +54,11 @@ async def health_check():
 
 
 # Import and include routers
-from app.api.v1.endpoints import auth, company, project, document, ai
+from app.api.v1.endpoints import auth, company, project, document, ai, estimation
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(company.router, prefix="/api/v1/company", tags=["company"])
 app.include_router(project.router, prefix="/api/v1/projects", tags=["projects"])
 app.include_router(document.router, prefix="/api/v1", tags=["documents"])
 app.include_router(ai.router, prefix="/api/v1/ai", tags=["ai"])
+app.include_router(estimation.router, prefix="/api/v1", tags=["estimation"])

@@ -41,3 +41,27 @@ class Quote(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class Estimate(Base):
+    __tablename__ = "estimates"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+
+    # Cost breakdown
+    materials_cost = Column(Numeric(15, 2), default=0)
+    labor_cost = Column(Numeric(15, 2), default=0)
+    equipment_cost = Column(Numeric(15, 2), default=0)
+    subcontractor_cost = Column(Numeric(15, 2), default=0)
+    overhead = Column(Numeric(15, 2), default=0)
+    profit = Column(Numeric(15, 2), default=0)
+    total_cost = Column(Numeric(15, 2), nullable=False)
+
+    # Metadata
+    confidence_score = Column(Numeric(5, 2))  # 0-100
+    notes = Column(String)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())

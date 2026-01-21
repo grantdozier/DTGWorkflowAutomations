@@ -219,7 +219,11 @@ SELECT * FROM companies LIMIT 10;
 - ✅ **Phase 3**: Project Management (Full CRUD, filtering, bid items)
 - ✅ **Phase 4**: File Upload (Plans/specs with local storage)
 - ✅ **Phase 5**: AI Integration (Claude 3.5 Sonnet vision plan parsing)
-- ⏳ **Phase 6**: Estimation Engine
+- ✅ **Phase 6**: Estimation Engine (Complete cost estimation with breakdown)
+
+## 🎉 System Complete!
+
+All phases are now implemented! The system is fully functional end-to-end.
 
 **See QUICKSTART.md for step-by-step instructions to run the app!**
 
@@ -374,6 +378,54 @@ OPENAI_API_KEY=sk-...  # Optional
 ```bash
 cd backend
 python test_ai_parsing.py
+```
+
+## 💰 Phase 6: Estimation Engine Features
+
+Complete cost estimation system that ties everything together:
+
+- Generate project estimates from AI-parsed takeoffs
+- Apply company labor rates automatically
+- Calculate equipment costs based on labor hours
+- Add overhead and profit margins
+- Detailed cost breakdowns by category
+- Multiple estimates per project
+- Custom overhead and profit percentages
+- Confidence scoring based on data quality
+
+**How It Works:**
+1. Parse construction plan (Phase 5)
+2. Extract quantities and items
+3. Apply company rates (Phase 2)
+4. Calculate: Materials + Labor + Equipment
+5. Add overhead and profit
+6. Generate complete estimate
+
+**Cost Components:**
+- **Materials**: Based on takeoff quantities and unit costs
+- **Labor**: Calculated from productivity rates and company labor rates
+- **Equipment**: Based on labor hours and equipment rates
+- **Overhead**: Percentage of direct costs (configurable)
+- **Profit**: Percentage of subtotal (configurable)
+
+**API Endpoints:**
+- `POST /api/v1/projects/{id}/estimate` - Generate new estimate
+- `GET /api/v1/projects/{id}/estimates` - List all estimates
+- `GET /api/v1/projects/{id}/estimates/{est_id}` - Get estimate details
+- `DELETE /api/v1/projects/{id}/estimates/{est_id}` - Delete estimate
+
+**Features:**
+- Automatic calculation from parsed data
+- Company-specific rates application
+- Customizable overhead and profit margins
+- Detailed line-item breakdown
+- Confidence scoring
+- Multiple estimates per project for comparison
+
+**Test it:**
+```bash
+cd backend
+python test_estimation.py
 ```
 
 ## 🐛 Troubleshooting

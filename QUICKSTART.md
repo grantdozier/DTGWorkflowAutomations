@@ -240,6 +240,51 @@ Authorization: Bearer <your_token>
 ANTHROPIC_API_KEY=sk-ant-your-key-here
 ```
 
+### Cost Estimation
+
+**Generate Estimate:**
+```bash
+POST http://localhost:8000/api/v1/projects/{project_id}/estimate
+Authorization: Bearer <your_token>
+Content-Type: application/json
+
+{
+  "include_takeoffs": true,
+  "include_bid_items": true
+}
+```
+
+**Generate with Custom Margins:**
+```bash
+POST http://localhost:8000/api/v1/projects/{project_id}/estimate
+Authorization: Bearer <your_token>
+Content-Type: application/json
+
+{
+  "include_takeoffs": true,
+  "overhead_percentage": 20.0,
+  "profit_percentage": 15.0
+}
+```
+
+**List All Estimates:**
+```bash
+GET http://localhost:8000/api/v1/projects/{project_id}/estimates
+Authorization: Bearer <your_token>
+```
+
+**Get Estimate Details:**
+```bash
+GET http://localhost:8000/api/v1/projects/{project_id}/estimates/{estimate_id}
+Authorization: Bearer <your_token>
+```
+
+**Delete Estimate:**
+```bash
+DELETE http://localhost:8000/api/v1/projects/{project_id}/estimates/{estimate_id}
+Authorization: Bearer <your_token>
+```
+
 ## 🧪 Testing with cURL
 
 **Register:**
