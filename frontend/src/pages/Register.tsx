@@ -42,18 +42,54 @@ export default function Register() {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ mt: 8 }}>
-        <Paper elevation={3} sx={{ p: 4 }}>
-          <Typography variant="h4" align="center" gutterBottom>
-            DTG Workflow Automations
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+        py: 4,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 2,
+            }}
+          >
+            <Typography sx={{ color: 'white', fontWeight: 700, fontSize: 18 }}>
+              DTG
+            </Typography>
+          </Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: 'grey.900' }}>
+            Create your account
           </Typography>
-          <Typography variant="h6" align="center" gutterBottom color="text.secondary">
-            Register
+          <Typography color="text.secondary">
+            Get started with DTG Workflow
           </Typography>
+        </Box>
 
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 4, 
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'grey.200',
+          }}
+        >
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
               {error}
             </Alert>
           )}
@@ -67,6 +103,7 @@ export default function Register() {
               onChange={handleChange('email')}
               margin="normal"
               required
+              InputProps={{ sx: { bgcolor: 'grey.50' } }}
             />
             <TextField
               fullWidth
@@ -75,6 +112,7 @@ export default function Register() {
               onChange={handleChange('name')}
               margin="normal"
               required
+              InputProps={{ sx: { bgcolor: 'grey.50' } }}
             />
             <TextField
               fullWidth
@@ -83,6 +121,7 @@ export default function Register() {
               onChange={handleChange('company_name')}
               margin="normal"
               required
+              InputProps={{ sx: { bgcolor: 'grey.50' } }}
             />
             <TextField
               fullWidth
@@ -92,28 +131,37 @@ export default function Register() {
               onChange={handleChange('password')}
               margin="normal"
               required
+              InputProps={{ sx: { bgcolor: 'grey.50' } }}
             />
             <Button
               fullWidth
               variant="contained"
               type="submit"
               disabled={loading}
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ 
+                mt: 3, 
+                mb: 2,
+                py: 1.5,
+                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+                },
+              }}
             >
-              {loading ? 'Registering...' : 'Register'}
+              {loading ? 'Creating account...' : 'Create Account'}
             </Button>
           </form>
 
           <Box sx={{ textAlign: 'center', mt: 2 }}>
-            <Typography variant="body2">
+            <Typography variant="body2" color="text.secondary">
               Already have an account?{' '}
-              <Link to="/login" style={{ textDecoration: 'none' }}>
-                Login here
+              <Link to="/login" style={{ textDecoration: 'none', color: '#3b82f6', fontWeight: 500 }}>
+                Sign in
               </Link>
             </Typography>
           </Box>
         </Paper>
-      </Box>
-    </Container>
+      </Container>
+    </Box>
   );
 }

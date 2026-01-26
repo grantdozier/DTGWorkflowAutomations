@@ -200,6 +200,57 @@ async def update_company_rates(
     return rates
 
 
+@router.post("/rates/bulk-update", response_model=CompanyRatesResponse)
+async def bulk_update_company_rates(
+    rates_data: CompanyRatesCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create or update all company rates in a single call (wizard-friendly)
+
+    This endpoint is idempotent and will:
+    - Create rates if they don't exist
+    - Update rates if they already exist
+
+    Perfect for onboarding wizard where you want to save all rates at once.
+
+    Example request body:
+    {
+        "labor_rate_json": {"foreman": 45.00, "operator": 35.00, "laborer": 25.00},
+        "equipment_rate_json": {"excavator": {"hourly": 125.00, "daily": 900.00}},
+        "overhead_json": {"percentage": 15.0},
+        "margin_json": {"profit": 10.0, "bond": 2.0, "contingency": 5.0}
+    }
+    """
+    # Check if rates already exist
+    rates = db.query(CompanyRates).filter(
+        CompanyRates.company_id == current_user.company_id
+    ).first()
+
+    if rates:
+        # Update existing rates
+        rates.labor_rate_json = rates_data.labor_rate_json
+        rates.equipment_rate_json = rates_data.equipment_rate_json
+        rates.overhead_json = rates_data.overhead_json
+        rates.margin_json = rates_data.margin_json
+    else:
+        # Create new rates
+        rates = CompanyRates(
+            company_id=current_user.company_id,
+            labor_rate_json=rates_data.labor_rate_json,
+            equipment_rate_json=rates_data.equipment_rate_json,
+            overhead_json=rates_data.overhead_json,
+            margin_json=rates_data.margin_json
+        )
+        db.add(rates)
+
+    db.commit()
+    db.refresh(rates)
+
+    return rates
+
+
 @router.get("/rates/examples")
 async def get_rate_examples(
     current_user: User = Depends(get_current_user)

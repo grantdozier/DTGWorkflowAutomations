@@ -6,6 +6,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.models.project import Project, ProjectDocument, BidItem, ProjectBidItem
+from app.models.estimation import TakeoffItem
 from app.api.v1.schemas.project import (
     ProjectCreate,
     ProjectUpdate,
@@ -269,3 +270,195 @@ async def add_project_bid_item(
     project_bid_item.bid_item = bid_item
 
     return project_bid_item
+
+
+# ============================================================
+# TAKEOFF ITEMS ENDPOINTS
+# ============================================================
+
+@router.get("/{project_id}/takeoffs")
+async def list_project_takeoffs(
+    project_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    List all takeoff items for a project
+    """
+    # Verify project ownership
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.company_id == current_user.company_id
+    ).first()
+
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+
+    takeoffs = db.query(TakeoffItem).filter(
+        TakeoffItem.project_id == project_id
+    ).all()
+
+    return [
+        {
+            "id": str(t.id),
+            "label": t.label,
+            "description": t.notes or "",
+            "quantity": float(t.qty) if t.qty else 0,
+            "unit": t.unit,
+            "source_page": t.source_page,
+            "category": None,
+            "quote_status": None,
+        }
+        for t in takeoffs
+    ]
+
+
+@router.post("/{project_id}/takeoffs", status_code=status.HTTP_201_CREATED)
+async def create_project_takeoff(
+    project_id: str,
+    takeoff_data: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new takeoff item for a project
+    """
+    # Verify project ownership
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.company_id == current_user.company_id
+    ).first()
+
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+
+    takeoff = TakeoffItem(
+        project_id=project_id,
+        label=takeoff_data.get("label", "New Item"),
+        qty=takeoff_data.get("quantity", 0),
+        unit=takeoff_data.get("unit", "EA"),
+        notes=takeoff_data.get("description", ""),
+        source_page=takeoff_data.get("source_page"),
+    )
+
+    db.add(takeoff)
+    db.commit()
+    db.refresh(takeoff)
+
+    return {
+        "id": str(takeoff.id),
+        "label": takeoff.label,
+        "description": takeoff.notes or "",
+        "quantity": float(takeoff.qty) if takeoff.qty else 0,
+        "unit": takeoff.unit,
+        "source_page": takeoff.source_page,
+        "category": None,
+        "quote_status": None,
+    }
+
+
+@router.patch("/{project_id}/takeoffs/{takeoff_id}")
+async def update_project_takeoff(
+    project_id: str,
+    takeoff_id: str,
+    takeoff_data: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update a takeoff item
+    """
+    # Verify project ownership
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.company_id == current_user.company_id
+    ).first()
+
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+
+    takeoff = db.query(TakeoffItem).filter(
+        TakeoffItem.id == takeoff_id,
+        TakeoffItem.project_id == project_id
+    ).first()
+
+    if not takeoff:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Takeoff item not found"
+        )
+
+    # Map frontend fields to model fields
+    field_mapping = {
+        "label": "label",
+        "description": "notes",
+        "quantity": "qty",
+        "unit": "unit",
+        "source_page": "source_page",
+    }
+
+    for frontend_field, model_field in field_mapping.items():
+        if frontend_field in takeoff_data:
+            setattr(takeoff, model_field, takeoff_data[frontend_field])
+
+    db.commit()
+    db.refresh(takeoff)
+
+    return {
+        "id": str(takeoff.id),
+        "label": takeoff.label,
+        "description": takeoff.notes or "",
+        "quantity": float(takeoff.qty) if takeoff.qty else 0,
+        "unit": takeoff.unit,
+        "source_page": takeoff.source_page,
+        "category": None,
+        "quote_status": None,
+    }
+
+
+@router.delete("/{project_id}/takeoffs/{takeoff_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project_takeoff(
+    project_id: str,
+    takeoff_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a takeoff item
+    """
+    # Verify project ownership
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.company_id == current_user.company_id
+    ).first()
+
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+
+    takeoff = db.query(TakeoffItem).filter(
+        TakeoffItem.id == takeoff_id,
+        TakeoffItem.project_id == project_id
+    ).first()
+
+    if not takeoff:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Takeoff item not found"
+        )
+
+    db.delete(takeoff)
+    db.commit()
+
+    return None

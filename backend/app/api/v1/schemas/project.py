@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
+from uuid import UUID
 
 
 class ProjectBase(BaseModel):
@@ -26,8 +27,8 @@ class ProjectUpdate(BaseModel):
 
 class ProjectResponse(ProjectBase):
     """Project response"""
-    id: str
-    company_id: str
+    id: UUID
+    company_id: UUID
     created_at: datetime
     updated_at: Optional[datetime]
 
@@ -43,8 +44,8 @@ class ProjectListResponse(BaseModel):
 
 class ProjectDocumentResponse(BaseModel):
     """Project document response"""
-    id: str
-    project_id: str
+    id: UUID
+    project_id: UUID
     doc_type: str
     file_path: str
     uploaded_at: datetime
@@ -62,7 +63,7 @@ class BidItemBase(BaseModel):
 
 class BidItemResponse(BidItemBase):
     """Bid item response"""
-    id: str
+    id: UUID
     created_at: datetime
 
     class Config:
@@ -71,7 +72,7 @@ class BidItemResponse(BidItemBase):
 
 class ProjectBidItemCreate(BaseModel):
     """Create project bid item"""
-    bid_item_id: str
+    bid_item_id: UUID
     bid_qty: Optional[float] = None
     bid_unit_price: Optional[float] = None
 
@@ -84,9 +85,9 @@ class ProjectBidItemUpdate(BaseModel):
 
 class ProjectBidItemResponse(BaseModel):
     """Project bid item response"""
-    id: str
-    project_id: str
-    bid_item_id: str
+    id: UUID
+    project_id: UUID
+    bid_item_id: UUID
     bid_qty: Optional[float]
     bid_unit_price: Optional[float]
     created_at: datetime

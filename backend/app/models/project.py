@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, func, ForeignKey, Numeric
+from sqlalchemy import Column, String, DateTime, func, ForeignKey, Numeric, Date
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
@@ -51,6 +51,28 @@ class ProjectBidItem(Base):
 
     bid_qty = Column(Numeric(15, 2))
     bid_unit_price = Column(Numeric(15, 2))
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class HistoricalProject(Base):
+    """Imported past projects for productivity analysis"""
+    __tablename__ = "historical_projects"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
+
+    name = Column(String, nullable=False)
+    job_number = Column(String, nullable=False, index=True)
+    completion_date = Column(Date)
+
+    original_bid = Column(Numeric(15, 2))
+    final_cost = Column(Numeric(15, 2))
+    profit_margin = Column(Numeric(5, 2))  # Percentage
+
+    import_source = Column(String)  # csv, quickbooks, procore, etc.
+    notes = Column(String)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

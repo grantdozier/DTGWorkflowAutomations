@@ -54,7 +54,7 @@ async def health_check():
 
 
 # Import and include routers
-from app.api.v1.endpoints import auth, company, project, document, ai, estimation
+from app.api.v1.endpoints import auth, company, project, document, ai, estimation, equipment, vendor, import_data, quotes, quote_requests, discrepancies, specifications
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(company.router, prefix="/api/v1/company", tags=["company"])
@@ -62,3 +62,10 @@ app.include_router(project.router, prefix="/api/v1/projects", tags=["projects"])
 app.include_router(document.router, prefix="/api/v1", tags=["documents"])
 app.include_router(ai.router, prefix="/api/v1/ai", tags=["ai"])
 app.include_router(estimation.router, prefix="/api/v1", tags=["estimation"])
+app.include_router(equipment.router, prefix="/api/v1/equipment", tags=["equipment"])
+app.include_router(vendor.router, prefix="/api/v1/vendors", tags=["vendors"])
+app.include_router(import_data.router, prefix="/api/v1/import", tags=["import"])
+app.include_router(quotes.router, prefix="/api/v1", tags=["quotes"])
+app.include_router(quote_requests.router, prefix="/api/v1", tags=["quote-requests"])
+app.include_router(discrepancies.router, prefix="/api/v1", tags=["discrepancies"])
+app.include_router(specifications.router, prefix="/api/v1", tags=["specifications"])

@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:5173"]
 
+    # Email Service
+    EMAIL_SERVICE: str = "sendgrid"  # sendgrid or smtp
+    SENDGRID_API_KEY: Optional[str] = None
+    SENDGRID_FROM_EMAIL: str = "quotes@yourdomain.com"
+    SENDGRID_FROM_NAME: str = "DTG Workflow Automations"
+
     class Config:
         env_file = ".env"
         case_sensitive = True

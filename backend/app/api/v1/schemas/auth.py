@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 
 class UserRegister(BaseModel):
@@ -31,12 +32,13 @@ class TokenData(BaseModel):
 
 class UserResponse(BaseModel):
     """User data response"""
-    id: str
+    id: UUID
     email: str
     name: str
-    company_id: str
+    company_id: UUID
     role: str
     is_active: bool
+    onboarding_completed: bool
     created_at: datetime
 
     class Config:
@@ -45,7 +47,7 @@ class UserResponse(BaseModel):
 
 class CompanyResponse(BaseModel):
     """Company data response"""
-    id: str
+    id: UUID
     name: str
     created_at: datetime
 

@@ -1,12 +1,13 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 
 class DocumentUploadResponse(BaseModel):
     """Response after uploading a document"""
-    id: str
-    project_id: str
+    id: UUID
+    project_id: UUID
     doc_type: str
     file_path: str
     filename: str
@@ -19,8 +20,8 @@ class DocumentUploadResponse(BaseModel):
 
 class DocumentListResponse(BaseModel):
     """Document list item"""
-    id: str
-    project_id: str
+    id: UUID
+    project_id: UUID
     doc_type: str
     file_path: str
     uploaded_at: datetime

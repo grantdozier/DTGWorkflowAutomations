@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
+from uuid import UUID
 
 
 class BidItemParsed(BaseModel):
@@ -35,7 +36,7 @@ class ProjectInfoParsed(BaseModel):
 class ParsePlanResponse(BaseModel):
     """Response from plan parsing"""
     success: bool
-    document_id: str
+    document_id: UUID
     pages_analyzed: Optional[int] = None
     method: str  # "claude", "openai", "ocr"
     data: Optional[Dict[str, Any]] = None

@@ -35,6 +35,7 @@ export const getCurrentUser = () => api.get('/auth/me');
 export const getProjects = () => api.get('/projects');
 export const getProject = (id: string) => api.get(`/projects/${id}`);
 export const createProject = (data: any) => api.post('/projects', data);
+export const deleteProject = (id: string) => api.delete(`/projects/${id}`);
 
 // Documents
 export const uploadDocument = (projectId: string, file: File, docType: string) => {

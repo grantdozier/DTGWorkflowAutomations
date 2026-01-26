@@ -99,7 +99,7 @@ async def upload_project_document(
     }
 
 
-@router.get("/projects/{project_id}/documents", response_model=list[DocumentListResponse])
+@router.get("/projects/{project_id}/documents")
 async def list_project_documents(
     project_id: str,
     doc_type: str = None,
@@ -131,7 +131,19 @@ async def list_project_documents(
 
     documents = query.all()
 
-    return documents
+    # Return with file_name derived from file_path
+    return [
+        {
+            "id": str(doc.id),
+            "project_id": str(doc.project_id),
+            "doc_type": doc.doc_type,
+            "file_path": doc.file_path,
+            "file_name": Path(doc.file_path).name,
+            "uploaded_at": doc.uploaded_at.isoformat() if doc.uploaded_at else None,
+            "is_parsed": False,  # TODO: Add parsed tracking
+        }
+        for doc in documents
+    ]
 
 
 @router.get("/projects/{project_id}/documents/{document_id}")

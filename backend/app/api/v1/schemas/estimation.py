@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from decimal import Decimal
+from uuid import UUID
 
 
 class CostBreakdown(BaseModel):
@@ -38,9 +39,9 @@ class GenerateEstimateRequest(BaseModel):
 
 class EstimateResponse(BaseModel):
     """Estimate response"""
-    id: str
-    project_id: str
-    created_by: str
+    id: UUID
+    project_id: UUID
+    created_by: UUID
     created_at: datetime
 
     # Cost breakdown

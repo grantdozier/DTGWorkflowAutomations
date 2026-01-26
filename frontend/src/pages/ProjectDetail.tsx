@@ -6,273 +6,269 @@ import {
   Typography,
   Button,
   Paper,
-  AppBar,
-  Toolbar,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
+  Tabs,
+  Tab,
   Alert,
   CircularProgress,
-  Card,
-  CardContent,
+  Chip,
 } from '@mui/material';
-import { ArrowBack, Upload, AutoAwesome, Calculate } from '@mui/icons-material';
 import {
-  getProject,
-  getDocuments,
-  uploadDocument,
-  parseDocument,
-  generateEstimate,
-  getEstimates,
-} from '../services/api';
+  ArrowBack,
+  Description,
+  Article,
+  Build,
+  Calculate,
+  Warning,
+  Info,
+} from '@mui/icons-material';
+import { getProject } from '../services/api';
+import Layout from '../components/Layout';
+
+// Tab components (will be created)
+import OverviewTab from '../components/projects/OverviewTab';
+import DocumentsTab from '../components/projects/DocumentsTab';
+import TakeoffsTab from '../components/projects/TakeoffsTab';
+import SpecificationsTab from '../components/projects/SpecificationsTab';
+import EstimatesTab from '../components/projects/EstimatesTab';
+import DiscrepanciesTab from '../components/projects/DiscrepanciesTab';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`project-tabpanel-${index}`}
+      aria-labelledby={`project-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  );
+}
 
 export default function ProjectDetail() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState<any>(null);
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [estimates, setEstimates] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [activeTab, setActiveTab] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [documentCount, setDocumentCount] = useState(0);
+  const [takeoffCount, setTakeoffCount] = useState(0);
+  const [specCount, setSpecCount] = useState(0);
+  const [discrepancyCount, setDiscrepancyCount] = useState(0);
 
   useEffect(() => {
     loadProject();
-    loadDocuments();
-    loadEstimates();
   }, [projectId]);
 
   const loadProject = async () => {
     try {
+      setLoading(true);
       const response = await getProject(projectId!);
       setProject(response.data);
-    } catch (err) {
+      setError('');
+    } catch (err: any) {
       console.error('Failed to load project', err);
-    }
-  };
-
-  const loadDocuments = async () => {
-    try {
-      const response = await getDocuments(projectId!);
-      setDocuments(response.data);
-    } catch (err) {
-      console.error('Failed to load documents', err);
-    }
-  };
-
-  const loadEstimates = async () => {
-    try {
-      const response = await getEstimates(projectId!);
-      setEstimates(response.data.estimates);
-    } catch (err) {
-      console.error('Failed to load estimates', err);
-    }
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setLoading(true);
-    setError('');
-    setMessage('');
-
-    try {
-      await uploadDocument(projectId!, file, 'plan');
-      setMessage('✅ Document uploaded successfully!');
-      loadDocuments();
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to upload document');
+      setError(err.response?.data?.detail || 'Failed to load project');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleParseDocument = async (documentId: string) => {
-    setLoading(true);
-    setError('');
-    setMessage('');
-
-    try {
-      const response = await parseDocument(projectId!, documentId);
-      setMessage(`✅ Parsed! Extracted ${response.data.items_saved} items`);
-      setTimeout(() => setMessage(''), 3000);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to parse document');
-    } finally {
-      setLoading(false);
-    }
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
   };
 
-  const handleGenerateEstimate = async () => {
-    setLoading(true);
-    setError('');
-    setMessage('');
-
-    try {
-      const response = await generateEstimate(projectId!);
-      const total = response.data.breakdown.total;
-      setMessage(`✅ Estimate generated! Total: $${total.toLocaleString()}`);
-      loadEstimates();
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to generate estimate');
-    } finally {
-      setLoading(false);
-    }
+  const updateCounts = (counts: {
+    documents?: number;
+    takeoffs?: number;
+    specs?: number;
+    discrepancies?: number;
+  }) => {
+    if (counts.documents !== undefined) setDocumentCount(counts.documents);
+    if (counts.takeoffs !== undefined) setTakeoffCount(counts.takeoffs);
+    if (counts.specs !== undefined) setSpecCount(counts.specs);
+    if (counts.discrepancies !== undefined) setDiscrepancyCount(counts.discrepancies);
   };
 
-  if (!project) {
+  if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Box>
+      <Layout>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+          <CircularProgress />
+        </Box>
+      </Layout>
+    );
+  }
+
+  if (error || !project) {
+    return (
+      <Layout>
+        <Container maxWidth="lg" sx={{ mt: 4 }}>
+          <Alert severity="error">{error || 'Project not found'}</Alert>
+          <Button onClick={() => navigate('/dashboard')} sx={{ mt: 2 }}>
+            Back to Dashboard
+          </Button>
+        </Container>
+      </Layout>
     );
   }
 
   return (
-    <Box>
-      <AppBar position="static">
-        <Toolbar>
-          <Button color="inherit" startIcon={<ArrowBack />} onClick={() => navigate('/dashboard')}>
+    <Layout>
+      {/* Project sub-header */}
+      <Box sx={{ bgcolor: 'grey.100', borderBottom: '1px solid', borderColor: 'grey.300', py: 1.5, px: { xs: 2, md: 4 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate('/dashboard')}
+            size="small"
+            sx={{ color: 'grey.700' }}
+          >
             Back
           </Button>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, ml: 2 }}>
-            {project.name}
+          <Typography variant="h6" sx={{ fontWeight: 600, color: 'grey.900' }}>{project.name}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Job #{project.job_number} • {project.location || 'No location'}
           </Typography>
-        </Toolbar>
-      </AppBar>
-
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-        {/* Project Info */}
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h5" gutterBottom>
-            Project Details
-          </Typography>
-          <Typography variant="body1">Job Number: {project.job_number}</Typography>
-          <Typography variant="body1">Location: {project.location || 'N/A'}</Typography>
-          <Typography variant="body1">Type: {project.type || 'N/A'}</Typography>
-        </Paper>
-
-        {/* Upload Section */}
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            1. Upload Plan Document
-          </Typography>
+          <Box sx={{ flexGrow: 1 }} />
           <Button
-            variant="contained"
-            component="label"
-            startIcon={<Upload />}
-            disabled={loading}
+            variant="outlined"
+            size="small"
+            onClick={() => navigate(`/projects/${projectId}/quotes`)}
           >
-            Upload PDF Plan
-            <input
-              type="file"
-              hidden
-              accept=".pdf"
-              onChange={handleFileUpload}
-            />
+            Manage Quotes
           </Button>
-
-          {documents.length > 0 && (
-            <List sx={{ mt: 2 }}>
-              {documents.map((doc) => (
-                <div key={doc.id}>
-                  <ListItem>
-                    <ListItemText
-                      primary={`Document uploaded at ${new Date(doc.uploaded_at).toLocaleString()}`}
-                      secondary={`Type: ${doc.doc_type}`}
-                    />
-                    <Button
-                      variant="outlined"
-                      startIcon={<AutoAwesome />}
-                      onClick={() => handleParseDocument(doc.id)}
-                      disabled={loading}
-                      size="small"
-                    >
-                      Parse with AI
-                    </Button>
-                  </ListItem>
-                  <Divider />
-                </div>
-              ))}
-            </List>
-          )}
-        </Paper>
-
-        {/* Generate Estimate Section */}
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            2. Generate Cost Estimate
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            After parsing documents, generate a complete cost estimate
-          </Typography>
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<Calculate />}
-            onClick={handleGenerateEstimate}
-            disabled={loading || documents.length === 0}
-          >
-            Generate Estimate
-          </Button>
-        </Paper>
-
-        {/* Estimates List */}
-        {estimates.length > 0 && (
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Estimates
-            </Typography>
-            <List>
-              {estimates.map((est) => (
-                <Card key={est.id} sx={{ mb: 2 }}>
-                  <CardContent>
-                    <Typography variant="subtitle1">
-                      Estimate from {new Date(est.created_at).toLocaleDateString()}
-                    </Typography>
-                    <Typography variant="h5" color="primary" sx={{ mt: 1 }}>
-                      Total: ${est.total_cost.toLocaleString()}
-                    </Typography>
-                    <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-                      <Typography variant="body2">Materials: ${est.materials_cost.toLocaleString()}</Typography>
-                      <Typography variant="body2">Labor: ${est.labor_cost.toLocaleString()}</Typography>
-                      <Typography variant="body2">Equipment: ${est.equipment_cost.toLocaleString()}</Typography>
-                      <Typography variant="body2">Overhead: ${est.overhead.toLocaleString()}</Typography>
-                      <Typography variant="body2">Profit: ${est.profit.toLocaleString()}</Typography>
-                      {est.confidence_score && (
-                        <Typography variant="body2">Confidence: {est.confidence_score}%</Typography>
-                      )}
-                    </Box>
-                  </CardContent>
-                </Card>
-              ))}
-            </List>
-          </Paper>
-        )}
-      </Container>
-
-      {loading && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            bgcolor: 'rgba(0,0,0,0.3)',
-          }}
-        >
-          <CircularProgress />
+          <Chip
+            label={project.status || 'Active'}
+            color={project.status === 'completed' ? 'success' : 'primary'}
+            size="small"
+          />
         </Box>
-      )}
-    </Box>
+      </Box>
+
+      <Paper sx={{ mx: 2, mt: -1, borderRadius: '8px 8px 0 0' }} elevation={0}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          aria-label="project tabs"
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          <Tab
+            icon={<Info />}
+            iconPosition="start"
+            label="Overview"
+            id="project-tab-0"
+            aria-controls="project-tabpanel-0"
+          />
+          <Tab
+            icon={<Article />}
+            iconPosition="start"
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                Documents
+                {documentCount > 0 && (
+                  <Chip label={documentCount} size="small" color="primary" />
+                )}
+              </Box>
+            }
+            id="project-tab-1"
+            aria-controls="project-tabpanel-1"
+          />
+          <Tab
+            icon={<Build />}
+            iconPosition="start"
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                Takeoffs
+                {takeoffCount > 0 && (
+                  <Chip label={takeoffCount} size="small" color="primary" />
+                )}
+              </Box>
+            }
+            id="project-tab-2"
+            aria-controls="project-tabpanel-2"
+          />
+          <Tab
+            icon={<Description />}
+            iconPosition="start"
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                Specifications
+                {specCount > 0 && (
+                  <Chip label={specCount} size="small" color="primary" />
+                )}
+              </Box>
+            }
+            id="project-tab-3"
+            aria-controls="project-tabpanel-3"
+          />
+          <Tab
+            icon={<Calculate />}
+            iconPosition="start"
+            label="Estimates"
+            id="project-tab-4"
+            aria-controls="project-tabpanel-4"
+          />
+          <Tab
+            icon={<Warning />}
+            iconPosition="start"
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                Discrepancies
+                {discrepancyCount > 0 && (
+                  <Chip label={discrepancyCount} size="small" color="error" />
+                )}
+              </Box>
+            }
+            id="project-tab-5"
+            aria-controls="project-tabpanel-5"
+          />
+        </Tabs>
+      </Paper>
+
+      <Container maxWidth="xl" sx={{ mt: 2, mb: 4 }}>
+        <TabPanel value={activeTab} index={0}>
+          <OverviewTab project={project} onProjectUpdate={loadProject} />
+        </TabPanel>
+        <TabPanel value={activeTab} index={1}>
+          <DocumentsTab
+            projectId={projectId!}
+            onCountUpdate={(count) => updateCounts({ documents: count })}
+          />
+        </TabPanel>
+        <TabPanel value={activeTab} index={2}>
+          <TakeoffsTab
+            projectId={projectId!}
+            onCountUpdate={(count) => updateCounts({ takeoffs: count })}
+          />
+        </TabPanel>
+        <TabPanel value={activeTab} index={3}>
+          <SpecificationsTab
+            projectId={projectId!}
+            onCountUpdate={(count) => updateCounts({ specs: count })}
+          />
+        </TabPanel>
+        <TabPanel value={activeTab} index={4}>
+          <EstimatesTab projectId={projectId!} />
+        </TabPanel>
+        <TabPanel value={activeTab} index={5}>
+          <DiscrepanciesTab
+            projectId={projectId!}
+            onCountUpdate={(count) => updateCounts({ discrepancies: count })}
+          />
+        </TabPanel>
+      </Container>
+    </Layout>
   );
 }

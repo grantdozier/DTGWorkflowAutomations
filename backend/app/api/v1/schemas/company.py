@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from datetime import datetime
+from uuid import UUID
 
 
 class CompanyRatesBase(BaseModel):
@@ -23,8 +24,8 @@ class CompanyRatesUpdate(CompanyRatesBase):
 
 class CompanyRatesResponse(CompanyRatesBase):
     """Company rates response"""
-    id: str
-    company_id: str
+    id: UUID
+    company_id: UUID
     created_at: datetime
     updated_at: Optional[datetime]
 
@@ -39,7 +40,7 @@ class CompanyUpdate(BaseModel):
 
 class CompanyResponse(BaseModel):
     """Company response with rates"""
-    id: str
+    id: UUID
     name: str
     created_at: datetime
     rates: Optional[CompanyRatesResponse] = None
