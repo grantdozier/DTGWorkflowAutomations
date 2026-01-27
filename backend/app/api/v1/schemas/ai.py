@@ -38,9 +38,13 @@ class ParsePlanResponse(BaseModel):
     success: bool
     document_id: UUID
     pages_analyzed: Optional[int] = None
-    method: str  # "claude", "openai", "ocr"
+    method: str  # "claude", "openai", "ocr", "claude_tiling", "openai_native", "tesseract_ocr"
+    strategy: Optional[str] = None  # NEW: Specific strategy used (e.g., "claude_tiling")
+    confidence: Optional[float] = None  # NEW: Confidence score (0.0-1.0)
+    processing_time_ms: Optional[int] = None  # NEW: Processing time in milliseconds
     data: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None  # NEW: Strategy metadata
 
 
 class ParseStatusResponse(BaseModel):

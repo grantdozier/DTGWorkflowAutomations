@@ -36,12 +36,26 @@ class CompanyRatesResponse(CompanyRatesBase):
 class CompanyUpdate(BaseModel):
     """Update company information"""
     name: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    website: Optional[str] = None
 
 
 class CompanyResponse(BaseModel):
     """Company response with rates"""
     id: UUID
     name: str
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    website: Optional[str] = None
     created_at: datetime
     rates: Optional[CompanyRatesResponse] = None
 

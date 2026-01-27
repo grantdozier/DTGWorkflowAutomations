@@ -63,10 +63,11 @@ async def upload_project_document(
     validate_file(file)
 
     # Validate doc_type
-    if doc_type not in ["plan", "spec"]:
+    valid_doc_types = ["plan", "spec", "plan_and_spec", "addendum"]
+    if doc_type not in valid_doc_types:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="doc_type must be 'plan' or 'spec'"
+            detail=f"doc_type must be one of: {', '.join(valid_doc_types)}"
         )
 
     # Save file to disk
@@ -82,7 +83,9 @@ async def upload_project_document(
     document = ProjectDocument(
         project_id=project_id,
         doc_type=doc_type,
-        file_path=file_path
+        file_name=file.filename,
+        file_path=file_path,
+        is_parsed="false"
     )
 
     db.add(document)
@@ -131,16 +134,16 @@ async def list_project_documents(
 
     documents = query.all()
 
-    # Return with file_name derived from file_path
+    # Return with file_name from database or derived from file_path
     return [
         {
             "id": str(doc.id),
             "project_id": str(doc.project_id),
             "doc_type": doc.doc_type,
             "file_path": doc.file_path,
-            "file_name": Path(doc.file_path).name,
+            "file_name": doc.file_name or Path(doc.file_path).name,
             "uploaded_at": doc.uploaded_at.isoformat() if doc.uploaded_at else None,
-            "is_parsed": False,  # TODO: Add parsed tracking
+            "is_parsed": doc.is_parsed == "true" if doc.is_parsed else False,
         }
         for doc in documents
     ]

@@ -9,6 +9,7 @@ from app.core.security import get_current_user
 from app.models.user import User
 from app.models.project import HistoricalProject
 from app.models.estimation import HistoricalEstimate
+from app.models.material import Material
 from app.services.import_service import ImportService
 from app.api.v1.schemas.import_data import ImportValidationResult, ImportResult
 
@@ -184,3 +185,31 @@ async def download_estimates_template():
             "Content-Disposition": "attachment; filename=historical_estimates_template.csv"
         }
     )
+
+
+@router.post("/scrape-materials")
+async def scrape_materials(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Scrape materials from web sources and import into the material catalog.
+    
+    This is a placeholder endpoint - actual web scraping implementation
+    would need to be added based on specific vendor websites.
+    """
+    # For now, return a message indicating this needs implementation
+    # In production, this would call a scraping service
+    
+    # Count existing materials
+    existing_count = db.query(Material).filter(
+        Material.company_id == current_user.company_id
+    ).count()
+    
+    return {
+        "success": True,
+        "message": "Material scraping endpoint ready. Configure scraping sources in settings.",
+        "existing_materials": existing_count,
+        "imported_count": 0,
+        "note": "Web scraping requires configuration of vendor websites and API keys"
+    }

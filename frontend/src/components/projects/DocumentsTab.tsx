@@ -16,6 +16,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   Upload,
@@ -24,8 +26,12 @@ import {
   Download,
   Delete,
   PictureAsPdf,
+  Description,
+  Article,
+  Folder,
 } from '@mui/icons-material';
 import api from '../../services/api';
+import ParsingProgressDialog from './ParsingProgressDialog';
 
 interface Props {
   projectId: string;
@@ -49,6 +55,17 @@ export default function DocumentsTab({ projectId, onCountUpdate }: Props) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState(0);
+  const [parsingProgress, setParsingProgress] = useState({
+    open: false,
+    documentName: '',
+    status: 'idle' as 'idle' | 'converting' | 'tiling' | 'analyzing' | 'extracting' | 'saving' | 'complete' | 'error',
+    progress: 0,
+    currentPage: 0,
+    totalPages: 0,
+    itemsExtracted: 0,
+    error: '',
+  });
 
   useEffect(() => {
     loadDocuments();
@@ -67,7 +84,10 @@ export default function DocumentsTab({ projectId, onCountUpdate }: Props) {
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    docType: 'plan' | 'spec' | 'plan_and_spec' | 'addendum'
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -78,7 +98,7 @@ export default function DocumentsTab({ projectId, onCountUpdate }: Props) {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('doc_type', 'plan');
+      formData.append('doc_type', docType);
 
       await api.post(`/projects/${projectId}/documents`, formData, {
         headers: {
@@ -86,7 +106,7 @@ export default function DocumentsTab({ projectId, onCountUpdate }: Props) {
         },
       });
 
-      setMessage('Document uploaded successfully');
+      setMessage(`${docType === 'plan' ? 'Plan' : docType === 'spec' ? 'Specification' : 'Document'} uploaded successfully`);
       setTimeout(() => setMessage(''), 3000);
       await loadDocuments();
     } catch (err: any) {
@@ -98,24 +118,67 @@ export default function DocumentsTab({ projectId, onCountUpdate }: Props) {
   };
 
   const handleParseDocument = async (documentId: string) => {
+    const doc = documents.find(d => d.id === documentId);
     setParsing(documentId);
     setError('');
     setMessage('');
+    
+    // Show progress dialog
+    setParsingProgress({
+      open: true,
+      documentName: doc?.file_name || 'Document',
+      status: 'converting',
+      progress: 10,
+      currentPage: 1,
+      totalPages: 5,
+      itemsExtracted: 0,
+      error: '',
+    });
 
     try {
-      const response = await api.post(`/ai/parse-document`, {
-        project_id: projectId,
-        document_id: documentId,
-      });
-
-      setMessage(
-        `Successfully parsed! Extracted ${response.data.items_saved || 0} items`
+      // Simulate progress stages
+      setTimeout(() => setParsingProgress(p => ({ ...p, status: 'analyzing', progress: 40 })), 2000);
+      setTimeout(() => setParsingProgress(p => ({ ...p, status: 'extracting', progress: 70 })), 5000);
+      
+      const response = await api.post(
+        `/ai/projects/${projectId}/documents/${documentId}/parse-and-save`
       );
-      setTimeout(() => setMessage(''), 3000);
+
+      const itemsSaved = response.data.items_saved || 0;
+      
+      // Show completion
+      setParsingProgress(p => ({
+        ...p,
+        status: 'complete',
+        progress: 100,
+        itemsExtracted: itemsSaved,
+      }));
+      
+      setMessage(
+        `Successfully parsed! Extracted ${itemsSaved} items`
+      );
+      setTimeout(() => {
+        setMessage('');
+        setParsingProgress(p => ({ ...p, open: false }));
+      }, 3000);
       await loadDocuments();
     } catch (err: any) {
       console.error('Failed to parse document', err);
-      setError(err.response?.data?.detail || 'Failed to parse document');
+      const errorDetail = err.response?.data?.detail || 'Failed to parse document';
+      
+      setParsingProgress(p => ({
+        ...p,
+        status: 'error',
+        error: errorDetail,
+      }));
+      
+      if (errorDetail.includes('No AI services')) {
+        setError('AI services not configured. Please add ANTHROPIC_API_KEY or OPENAI_API_KEY to your .env file.');
+      } else {
+        setError(errorDetail);
+      }
+      
+      setTimeout(() => setParsingProgress(p => ({ ...p, open: false })), 5000);
     } finally {
       setParsing(null);
     }
@@ -162,26 +225,133 @@ export default function DocumentsTab({ projectId, onCountUpdate }: Props) {
     }
   };
 
+  // Filter documents by type
+  const planDocuments = documents.filter((d) => d.doc_type === 'plan');
+  const specDocuments = documents.filter((d) => d.doc_type === 'spec');
+  const planAndSpecDocuments = documents.filter((d) => d.doc_type === 'plan_and_spec');
+  const otherDocuments = documents.filter(
+    (d) => d.doc_type !== 'plan' && d.doc_type !== 'spec' && d.doc_type !== 'plan_and_spec'
+  );
+
+  // Render document list for a specific type
+  const renderDocumentList = (
+    docs: Document[],
+    emptyMessage: string,
+    emptyDescription: string
+  ) => {
+    if (loading) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+
+    if (docs.length === 0) {
+      return (
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <PictureAsPdf sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            {emptyMessage}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {emptyDescription}
+          </Typography>
+        </Box>
+      );
+    }
+
+    return (
+      <List>
+        {docs.map((doc, index) => (
+          <Box key={doc.id}>
+            <ListItem>
+              <Box sx={{ mr: 2 }}>
+                {doc.doc_type === 'spec' ? (
+                  <Article color="primary" />
+                ) : (
+                  <PictureAsPdf color="error" />
+                )}
+              </Box>
+              <ListItemText
+                primary={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {doc.file_name}
+                    {doc.is_parsed && (
+                      <Chip label="Parsed" color="success" size="small" />
+                    )}
+                  </Box>
+                }
+                secondary={`Uploaded ${new Date(doc.uploaded_at).toLocaleString()} • ${
+                  doc.doc_type
+                }`}
+              />
+              <ListItemSecondaryAction>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <IconButton
+                    edge="end"
+                    aria-label="view"
+                    size="small"
+                    onClick={() =>
+                      window.open(
+                        `/api/v1/projects/${projectId}/documents/${doc.id}`,
+                        '_blank'
+                      )
+                    }
+                  >
+                    <Visibility />
+                  </IconButton>
+                  <IconButton
+                    edge="end"
+                    aria-label="download"
+                    size="small"
+                    onClick={() => handleDownload(doc)}
+                  >
+                    <Download />
+                  </IconButton>
+                  {!doc.is_parsed && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={
+                        parsing === doc.id ? (
+                          <CircularProgress size={16} />
+                        ) : (
+                          <AutoAwesome />
+                        )
+                      }
+                      onClick={() => handleParseDocument(doc.id)}
+                      disabled={parsing === doc.id}
+                    >
+                      Parse with AI
+                    </Button>
+                  )}
+                  <IconButton
+                    edge="end"
+                    aria-label="delete"
+                    size="small"
+                    color="error"
+                    onClick={() => setDeleteConfirm(doc.id)}
+                  >
+                    <Delete />
+                  </IconButton>
+                </Box>
+              </ListItemSecondaryAction>
+            </ListItem>
+            {index < docs.length - 1 && (
+              <Box sx={{ borderBottom: 1, borderColor: 'divider' }} />
+            )}
+          </Box>
+        ))}
+      </List>
+    );
+  };
+
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h5">Documents</Typography>
-        <Button
-          variant="contained"
-          component="label"
-          startIcon={<Upload />}
-          disabled={uploading}
-        >
-          {uploading ? 'Uploading...' : 'Upload Document'}
-          <input
-            type="file"
-            hidden
-            accept=".pdf"
-            onChange={handleFileUpload}
-            disabled={uploading}
-          />
-        </Button>
-      </Box>
+      <Typography variant="h5" sx={{ mb: 3 }}>
+        Documents
+      </Typography>
 
       {message && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setMessage('')}>
@@ -196,92 +366,186 @@ export default function DocumentsTab({ projectId, onCountUpdate }: Props) {
       )}
 
       <Paper>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : documents.length === 0 ? (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <PictureAsPdf sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              No documents uploaded
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Upload a PDF plan to get started with AI-powered takeoff extraction
-            </Typography>
-          </Box>
-        ) : (
-          <List>
-            {documents.map((doc, index) => (
-              <Box key={doc.id}>
-                <ListItem>
-                  <Box sx={{ mr: 2 }}>
-                    <PictureAsPdf color="error" />
-                  </Box>
-                  <ListItemText
-                    primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {doc.file_name}
-                        {doc.is_parsed && (
-                          <Chip label="Parsed" color="success" size="small" />
-                        )}
-                      </Box>
-                    }
-                    secondary={`Uploaded ${new Date(doc.uploaded_at).toLocaleString()} • ${
-                      doc.doc_type
-                    }`}
+        <Tabs
+          value={activeTab}
+          onChange={(_, newValue) => setActiveTab(newValue)}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+        >
+          <Tab
+            icon={<Description />}
+            label={`Plans (${planDocuments.length})`}
+            iconPosition="start"
+          />
+          <Tab
+            icon={<Article />}
+            label={`Specifications (${specDocuments.length})`}
+            iconPosition="start"
+          />
+          <Tab
+            icon={<Description />}
+            label={`Plan & Spec (${planAndSpecDocuments.length})`}
+            iconPosition="start"
+          />
+          <Tab
+            icon={<Folder />}
+            label={`Other (${otherDocuments.length})`}
+            iconPosition="start"
+          />
+        </Tabs>
+
+        {/* PLANS TAB */}
+        {activeTab === 0 && (
+          <Box>
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    Construction Plans
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Vision-based parsing with intelligent tiling for microscopic detail
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  component="label"
+                  startIcon={<Upload />}
+                  disabled={uploading}
+                >
+                  {uploading ? 'Uploading...' : 'Upload Plan'}
+                  <input
+                    type="file"
+                    hidden
+                    accept=".pdf"
+                    onChange={(e) => handleFileUpload(e, 'plan')}
+                    disabled={uploading}
                   />
-                  <ListItemSecondaryAction>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <IconButton
-                        edge="end"
-                        aria-label="view"
-                        size="small"
-                        onClick={() => window.open(`/api/v1/projects/${projectId}/documents/${doc.id}`, '_blank')}
-                      >
-                        <Visibility />
-                      </IconButton>
-                      <IconButton
-                        edge="end"
-                        aria-label="download"
-                        size="small"
-                        onClick={() => handleDownload(doc)}
-                      >
-                        <Download />
-                      </IconButton>
-                      {!doc.is_parsed && (
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={
-                            parsing === doc.id ? (
-                              <CircularProgress size={16} />
-                            ) : (
-                              <AutoAwesome />
-                            )
-                          }
-                          onClick={() => handleParseDocument(doc.id)}
-                          disabled={parsing === doc.id}
-                        >
-                          Parse with AI
-                        </Button>
-                      )}
-                      <IconButton
-                        edge="end"
-                        aria-label="delete"
-                        size="small"
-                        color="error"
-                        onClick={() => setDeleteConfirm(doc.id)}
-                      >
-                        <Delete />
-                      </IconButton>
-                    </Box>
-                  </ListItemSecondaryAction>
-                </ListItem>
-                {index < documents.length - 1 && <Box sx={{ borderBottom: 1, borderColor: 'divider' }} />}
+                </Button>
               </Box>
-            ))}
-          </List>
+            </Box>
+            {renderDocumentList(
+              planDocuments,
+              'No plans uploaded',
+              'Upload construction plans for AI-powered takeoff extraction with vision models'
+            )}
+          </Box>
+        )}
+
+        {/* SPECIFICATIONS TAB */}
+        {activeTab === 1 && (
+          <Box>
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    Specifications
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Text extraction and intelligent structuring for specification documents
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  component="label"
+                  startIcon={<Upload />}
+                  disabled={uploading}
+                  color="primary"
+                >
+                  {uploading ? 'Uploading...' : 'Upload Spec'}
+                  <input
+                    type="file"
+                    hidden
+                    accept=".pdf"
+                    onChange={(e) => handleFileUpload(e, 'spec')}
+                    disabled={uploading}
+                  />
+                </Button>
+              </Box>
+            </Box>
+            {renderDocumentList(
+              specDocuments,
+              'No specifications uploaded',
+              'Upload specification documents for text extraction and requirement analysis'
+            )}
+          </Box>
+        )}
+
+        {/* PLAN & SPEC COMBINED TAB */}
+        {activeTab === 2 && (
+          <Box>
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    Plan & Specification Combined
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Documents containing both construction plans and specifications
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  component="label"
+                  startIcon={<Upload />}
+                  disabled={uploading}
+                  color="secondary"
+                >
+                  {uploading ? 'Uploading...' : 'Upload Plan & Spec'}
+                  <input
+                    type="file"
+                    hidden
+                    accept=".pdf"
+                    onChange={(e) => handleFileUpload(e, 'plan_and_spec')}
+                    disabled={uploading}
+                  />
+                </Button>
+              </Box>
+            </Box>
+            {renderDocumentList(
+              planAndSpecDocuments,
+              'No combined documents uploaded',
+              'Upload documents that contain both plans and specifications'
+            )}
+          </Box>
+        )}
+
+        {/* OTHER/ADDENDUM TAB */}
+        {activeTab === 3 && (
+          <Box>
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    Other Documents
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Addenda, photos, and other project documents
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  component="label"
+                  startIcon={<Upload />}
+                  disabled={uploading}
+                  color="secondary"
+                >
+                  {uploading ? 'Uploading...' : 'Upload Document'}
+                  <input
+                    type="file"
+                    hidden
+                    accept=".pdf"
+                    onChange={(e) => handleFileUpload(e, 'addendum')}
+                    disabled={uploading}
+                  />
+                </Button>
+              </Box>
+            </Box>
+            {renderDocumentList(
+              otherDocuments,
+              'No other documents uploaded',
+              'Upload addenda, photos, or other project-related documents'
+            )}
+          </Box>
         )}
       </Paper>
 
@@ -290,7 +554,8 @@ export default function DocumentsTab({ projectId, onCountUpdate }: Props) {
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete this document? This action cannot be undone.
+            Are you sure you want to delete this document? This action cannot be
+            undone.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -300,6 +565,19 @@ export default function DocumentsTab({ projectId, onCountUpdate }: Props) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Parsing Progress Dialog */}
+      <ParsingProgressDialog
+        open={parsingProgress.open}
+        documentName={parsingProgress.documentName}
+        onClose={() => setParsingProgress(p => ({ ...p, open: false }))}
+        status={parsingProgress.status}
+        progress={parsingProgress.progress}
+        currentPage={parsingProgress.currentPage}
+        totalPages={parsingProgress.totalPages}
+        itemsExtracted={parsingProgress.itemsExtracted}
+        error={parsingProgress.error}
+      />
     </Box>
   );
 }

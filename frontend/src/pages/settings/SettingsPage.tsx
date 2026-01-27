@@ -15,9 +15,10 @@ import {
   Grid,
   Chip,
 } from '@mui/material';
-import { Add, Delete, Save, Business, AttachMoney, Percent, Build } from '@mui/icons-material';
+import { Add, Delete, Save, Business, AttachMoney, Percent, Build, Inventory } from '@mui/icons-material';
 import api from '../../services/api';
 import Layout from '../../components/Layout';
+import InventorySettings from './InventorySettings';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -247,6 +248,7 @@ export default function SettingsPage() {
     { label: 'Labor Rates', icon: <AttachMoney fontSize="small" /> },
     { label: 'Equipment Rates', icon: <Build fontSize="small" /> },
     { label: 'Margins', icon: <Percent fontSize="small" /> },
+    { label: 'Inventory', icon: <Inventory fontSize="small" /> },
   ];
 
   if (loading) {
@@ -623,6 +625,20 @@ export default function SettingsPage() {
                 </Grid>
               </Grid>
             </Box>
+          </TabPanel>
+
+          {/* Inventory Tab */}
+          <TabPanel value={activeTab} index={4}>
+            <InventorySettings
+              onMessage={(msg, severity) => {
+                if (severity === 'success') {
+                  setSuccess(msg);
+                  setTimeout(() => setSuccess(''), 3000);
+                } else {
+                  setError(msg);
+                }
+              }}
+            />
           </TabPanel>
         </Paper>
       </Container>

@@ -67,6 +67,20 @@ async def update_my_company(
     # Update fields
     if company_data.name is not None:
         company.name = company_data.name
+    if company_data.address is not None:
+        company.address = company_data.address
+    if company_data.city is not None:
+        company.city = company_data.city
+    if company_data.state is not None:
+        company.state = company_data.state
+    if company_data.zip is not None:
+        company.zip = company_data.zip
+    if company_data.phone is not None:
+        company.phone = company_data.phone
+    if company_data.email is not None:
+        company.email = company_data.email
+    if company_data.website is not None:
+        company.website = company_data.website
 
     db.commit()
     db.refresh(company)

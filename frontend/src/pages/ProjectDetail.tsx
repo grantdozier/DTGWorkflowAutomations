@@ -20,6 +20,7 @@ import {
   Calculate,
   Warning,
   Info,
+  Receipt,
 } from '@mui/icons-material';
 import { getProject } from '../services/api';
 import Layout from '../components/Layout';
@@ -29,6 +30,7 @@ import OverviewTab from '../components/projects/OverviewTab';
 import DocumentsTab from '../components/projects/DocumentsTab';
 import TakeoffsTab from '../components/projects/TakeoffsTab';
 import SpecificationsTab from '../components/projects/SpecificationsTab';
+import QuotesTab from '../components/projects/QuotesTab';
 import EstimatesTab from '../components/projects/EstimatesTab';
 import DiscrepanciesTab from '../components/projects/DiscrepanciesTab';
 
@@ -64,6 +66,7 @@ export default function ProjectDetail() {
   const [documentCount, setDocumentCount] = useState(0);
   const [takeoffCount, setTakeoffCount] = useState(0);
   const [specCount, setSpecCount] = useState(0);
+  const [quoteCount, setQuoteCount] = useState(0);
   const [discrepancyCount, setDiscrepancyCount] = useState(0);
 
   useEffect(() => {
@@ -92,11 +95,13 @@ export default function ProjectDetail() {
     documents?: number;
     takeoffs?: number;
     specs?: number;
+    quotes?: number;
     discrepancies?: number;
   }) => {
     if (counts.documents !== undefined) setDocumentCount(counts.documents);
     if (counts.takeoffs !== undefined) setTakeoffCount(counts.takeoffs);
     if (counts.specs !== undefined) setSpecCount(counts.specs);
+    if (counts.quotes !== undefined) setQuoteCount(counts.quotes);
     if (counts.discrepancies !== undefined) setDiscrepancyCount(counts.discrepancies);
   };
 
@@ -214,11 +219,25 @@ export default function ProjectDetail() {
             aria-controls="project-tabpanel-3"
           />
           <Tab
+            icon={<Receipt />}
+            iconPosition="start"
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                Quotes
+                {quoteCount > 0 && (
+                  <Chip label={quoteCount} size="small" color="primary" />
+                )}
+              </Box>
+            }
+            id="project-tab-4"
+            aria-controls="project-tabpanel-4"
+          />
+          <Tab
             icon={<Calculate />}
             iconPosition="start"
             label="Estimates"
-            id="project-tab-4"
-            aria-controls="project-tabpanel-4"
+            id="project-tab-5"
+            aria-controls="project-tabpanel-5"
           />
           <Tab
             icon={<Warning />}
@@ -231,8 +250,8 @@ export default function ProjectDetail() {
                 )}
               </Box>
             }
-            id="project-tab-5"
-            aria-controls="project-tabpanel-5"
+            id="project-tab-6"
+            aria-controls="project-tabpanel-6"
           />
         </Tabs>
       </Paper>
@@ -260,9 +279,15 @@ export default function ProjectDetail() {
           />
         </TabPanel>
         <TabPanel value={activeTab} index={4}>
-          <EstimatesTab projectId={projectId!} />
+          <QuotesTab
+            projectId={projectId!}
+            onCountUpdate={(count) => updateCounts({ quotes: count })}
+          />
         </TabPanel>
         <TabPanel value={activeTab} index={5}>
+          <EstimatesTab projectId={projectId!} />
+        </TabPanel>
+        <TabPanel value={activeTab} index={6}>
           <DiscrepanciesTab
             projectId={projectId!}
             onCountUpdate={(count) => updateCounts({ discrepancies: count })}

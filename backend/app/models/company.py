@@ -10,6 +10,13 @@ class Company(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, nullable=False)
+    address = Column(String)
+    city = Column(String)
+    state = Column(String)
+    zip = Column(String)
+    phone = Column(String)
+    email = Column(String)
+    website = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

@@ -26,8 +26,10 @@ class ProjectDocument(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False)
 
-    doc_type = Column(String, nullable=False)  # plan, spec, addendum, etc.
+    doc_type = Column(String, nullable=False)  # plan, spec, addendum, plan_and_spec, etc.
+    file_name = Column(String)  # Original filename for display
     file_path = Column(String, nullable=False)
+    is_parsed = Column(String, default="false")  # Whether AI has parsed this document
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
