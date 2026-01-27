@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -8,10 +7,9 @@ import {
   Alert,
   CircularProgress,
   IconButton,
-  Chip,
 } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Add, Delete, Download, ShoppingCart } from '@mui/icons-material';
+import { Add, Delete, Download, AutoFixHigh, AttachMoney, DeleteSweep } from '@mui/icons-material';
 import api from '../../services/api';
 
 interface Props {
@@ -28,14 +26,20 @@ interface TakeoffItem {
   source_page?: number;
   category?: string;
   quote_status?: string;
+  matched_material_id?: string;
+  unit_price?: number;
+  total_price?: number;
+  matched_material?: string;
+  product_code?: string;
 }
 
 export default function TakeoffsTab({ projectId, onCountUpdate }: Props) {
-  const navigate = useNavigate();
   const [takeoffs, setTakeoffs] = useState<TakeoffItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [matching, setMatching] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [subtotal, setSubtotal] = useState(0);
 
   useEffect(() => {
     loadTakeoffs();
@@ -47,10 +51,30 @@ export default function TakeoffsTab({ projectId, onCountUpdate }: Props) {
       const response = await api.get(`/projects/${projectId}/takeoffs`);
       setTakeoffs(response.data);
       onCountUpdate(response.data.length);
+      // Calculate subtotal from items with prices
+      const total = response.data.reduce((sum: number, item: TakeoffItem) => 
+        sum + (item.total_price || 0), 0);
+      setSubtotal(total);
     } catch (err) {
       console.error('Failed to load takeoffs', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMatchToCatalog = async () => {
+    try {
+      setMatching(true);
+      setMessage('Matching items to material catalog...');
+      const response = await api.post(`/matching/match/project/${projectId}/apply`);
+      setMessage(`Matched ${response.data.matched} of ${response.data.total_items} items. Subtotal: $${response.data.subtotal.toFixed(2)}`);
+      setSubtotal(response.data.subtotal);
+      await loadTakeoffs();
+    } catch (err: any) {
+      console.error('Failed to match items', err);
+      setError(err.response?.data?.detail || 'Failed to match items to catalog');
+    } finally {
+      setMatching(false);
     }
   };
 
@@ -78,6 +102,21 @@ export default function TakeoffsTab({ projectId, onCountUpdate }: Props) {
     } catch (err: any) {
       console.error('Failed to delete takeoff', err);
       setError(err.response?.data?.detail || 'Failed to delete takeoff');
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!window.confirm(`Are you sure you want to delete all ${takeoffs.length} takeoff items? This cannot be undone.`)) {
+      return;
+    }
+    try {
+      await api.delete(`/projects/${projectId}/takeoffs`);
+      setMessage('All takeoff items deleted');
+      setTimeout(() => setMessage(''), 2000);
+      await loadTakeoffs();
+    } catch (err: any) {
+      console.error('Failed to delete all takeoffs', err);
+      setError(err.response?.data?.detail || 'Failed to delete all takeoffs');
     }
   };
 
@@ -123,16 +162,7 @@ export default function TakeoffsTab({ projectId, onCountUpdate }: Props) {
     link.remove();
   };
 
-  const getQuoteStatusChip = (status?: string) => {
-    if (!status) return <Chip label="No Quote" size="small" />;
-    const colorMap: any = {
-      requested: 'info',
-      received: 'success',
-      accepted: 'success',
-    };
-    return <Chip label={status} color={colorMap[status] || 'default'} size="small" />;
-  };
-
+  
   const columns: GridColDef[] = [
     {
       field: 'label',
@@ -168,17 +198,23 @@ export default function TakeoffsTab({ projectId, onCountUpdate }: Props) {
       editable: true,
     },
     {
-      field: 'source_page',
-      headerName: 'Page',
-      width: 80,
-      editable: true,
+      field: 'unit_price',
+      headerName: 'Unit Price',
+      width: 100,
       type: 'number',
+      valueFormatter: (value: number | null) => value ? `$${value.toFixed(2)}` : '-',
     },
     {
-      field: 'quote_status',
-      headerName: 'Quote Status',
-      width: 140,
-      renderCell: (params: GridRenderCellParams) => getQuoteStatusChip(params.value),
+      field: 'total_price',
+      headerName: 'Total',
+      width: 110,
+      type: 'number',
+      valueFormatter: (value: number | null) => value ? `$${value.toFixed(2)}` : '-',
+    },
+    {
+      field: 'product_code',
+      headerName: 'SKU',
+      width: 100,
     },
     {
       field: 'actions',
@@ -187,15 +223,7 @@ export default function TakeoffsTab({ projectId, onCountUpdate }: Props) {
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
         <Box>
-          <IconButton
-            size="small"
-            onClick={() => navigate(`/projects/${projectId}/request-quotes`)}
-            color="primary"
-            title="Request Quote"
-          >
-            <ShoppingCart fontSize="small" />
-          </IconButton>
-          <IconButton
+                    <IconButton
             size="small"
             onClick={() => handleDelete(params.row.id)}
             color="error"
@@ -210,9 +238,35 @@ export default function TakeoffsTab({ projectId, onCountUpdate }: Props) {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h5">Takeoff Items</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box>
+          <Typography variant="h5">Takeoff Items</Typography>
+          {subtotal > 0 && (
+            <Typography variant="h6" color="success.main" sx={{ mt: 0.5 }}>
+              <AttachMoney sx={{ fontSize: 20, verticalAlign: 'middle' }} />
+              Estimated Total: ${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </Typography>
+          )}
+        </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<DeleteSweep />}
+            onClick={handleDeleteAll}
+            disabled={takeoffs.length === 0}
+          >
+            Delete All
+          </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            startIcon={<AutoFixHigh />}
+            onClick={handleMatchToCatalog}
+            disabled={takeoffs.length === 0 || matching}
+          >
+            {matching ? 'Matching...' : 'Match to Catalog'}
+          </Button>
           <Button
             variant="outlined"
             startIcon={<Download />}

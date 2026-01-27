@@ -48,6 +48,8 @@ class ProjectDocumentResponse(BaseModel):
     project_id: UUID
     doc_type: str
     file_path: str
+    file_name: Optional[str] = None
+    is_parsed: Optional[str] = None
     uploaded_at: datetime
 
     class Config:

@@ -14,8 +14,14 @@ class TakeoffItem(Base):
     label = Column(String, nullable=False)
     qty = Column(Numeric(15, 2), nullable=False)
     unit = Column(String, nullable=False)
+    category = Column(String)  # Material category: Walls, Roofing, Sheathing, etc.
     source_page = Column(Integer)  # Page number from PDF
     notes = Column(String)
+    
+    # For matching to material catalog
+    matched_material_id = Column(UUID(as_uuid=True), ForeignKey("materials.id"))
+    unit_price = Column(Numeric(15, 2))  # Price from matched material
+    total_price = Column(Numeric(15, 2))  # qty * unit_price
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -121,6 +127,87 @@ class QuoteRequest(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class GeneratedQuote(Base):
+    """
+    Customer-facing quotes generated from takeoff items.
+    
+    This is the OUTPUT quote that a lumber yard generates for a GC/customer
+    based on parsed plan documents. Contains line items with product codes and pricing.
+    """
+    __tablename__ = "generated_quotes"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+
+    # Quote header info
+    quote_number = Column(String, nullable=False, index=True)
+    quote_date = Column(Date, server_default=func.current_date())
+    expiration_date = Column(Date)
+    
+    # Customer info
+    customer_name = Column(String)
+    customer_company = Column(String)
+    customer_email = Column(String)
+    customer_phone = Column(String)
+    
+    # Delivery info
+    delivery_address = Column(Text)
+    job_name = Column(String)
+    job_reference = Column(String)
+    
+    # Totals
+    subtotal = Column(Numeric(15, 2), default=0)
+    tax_rate = Column(Numeric(5, 4), default=0)  # e.g., 0.0825 for 8.25%
+    tax_amount = Column(Numeric(15, 2), default=0)
+    total = Column(Numeric(15, 2), default=0)
+    
+    # Status
+    status = Column(String, default="draft")  # draft, sent, accepted, rejected, expired
+    
+    # Notes
+    special_instructions = Column(Text)
+    notes = Column(Text)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class GeneratedQuoteLineItem(Base):
+    """
+    Individual line items on a generated quote.
+    
+    Matches the Stine quote format: Qty/Footage | Product Code | Description | Price | UOM | Total
+    """
+    __tablename__ = "generated_quote_line_items"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    generated_quote_id = Column(UUID(as_uuid=True), ForeignKey("generated_quotes.id", ondelete="CASCADE"), nullable=False)
+    takeoff_item_id = Column(UUID(as_uuid=True), ForeignKey("takeoff_items.id"))  # Link to source takeoff
+    material_id = Column(UUID(as_uuid=True), ForeignKey("materials.id"))  # Link to material catalog
+    
+    # Line item order
+    line_number = Column(Integer, nullable=False)
+    
+    # Category/section header (e.g., "Foundation", "Framing", "Roofing")
+    category = Column(String)
+    
+    # Product details
+    quantity = Column(Numeric(15, 2), nullable=False)
+    unit = Column(String, nullable=False)  # ea, BDL, RL, LF, etc.
+    product_code = Column(String)  # Vendor SKU
+    description = Column(String, nullable=False)
+    
+    # Pricing
+    unit_price = Column(Numeric(15, 2), nullable=False)
+    total_price = Column(Numeric(15, 2), nullable=False)
+    
+    # Additional info
+    notes = Column(String)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 class BidItemDiscrepancy(Base):

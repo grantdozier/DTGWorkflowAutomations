@@ -20,6 +20,18 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
 
+    # Google Cloud Document AI (optional)
+    GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = None
+    GOOGLE_PROJECT_ID: Optional[str] = None
+    GOOGLE_LOCATION: str = "us"
+    GOOGLE_PROCESSOR_ID: Optional[str] = None
+
+    # Document Parsing Strategy Toggles
+    ENABLE_OPENAI_PARSING: bool = True
+    ENABLE_DOCUMENT_AI_PARSING: bool = False
+    ENABLE_CLAUDE_PARSING: bool = True
+    ENABLE_TESSERACT_PARSING: bool = True
+
     # File Storage
     UPLOAD_DIR: str = "./uploads"
     MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024  # 50MB
